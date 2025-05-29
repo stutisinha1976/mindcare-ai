@@ -223,37 +223,7 @@ export default function QuestionnaireCarousel({ setProbabilities }: Props) {
               })}
           </ul>
 
-          {/* Plotly Bar Chart (Only for probabilities > 50%) */}
-          {(() => {
-            const highProbabilities = Object.entries(result.probabilities)
-              .filter(([, prob]) => (prob as number) > 0.5)
-
-            if (highProbabilities.length === 0) return null
-
-            return (
-              <Plot
-                data={[
-                  {
-                    type: "bar",
-                    x: highProbabilities.map(([, v]) => ((v as number) * 100).toFixed(2)),
-                    y: highProbabilities.map(([k]) => k),
-                    orientation: "h",
-                    marker: {
-                      color: highProbabilities.map(([, v]) => v as number),
-                      colorscale: "Viridis",
-                    },
-                  },
-                ]}
-                layout={{
-                  margin: { t: 20, l: 120 },
-                  xaxis: { title: { text: "Likelihood (%)" }, range: [0, 100] },
-                  yaxis: { automargin: true },
-                  height: 300 + 40 * highProbabilities.length,
-                }}
-                style={{ width: "100%" }}
-              />
-            )
-          })()}
+          
         </div>
       )}
     </div>
