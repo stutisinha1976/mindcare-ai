@@ -29,38 +29,89 @@ def predict():
         return jsonify({"error": "No JSON data received"}), 400
 
     try:
-        # Extract questionnaire answers q1 to q10
-        answers = []
-        for i in range(1, 11):
+        # --- Extract demographics and lifestyle questions explicitly ---
+        # Use .get() with fallback defaults
+        age = float(data.get("q1", 30))  # q1: age
+        gender_raw = data.get("q2", "Male")  # q2: gender string
+
+        # Map gender string to numeric (example mapping)
+        gender_map = {"Female": 0, "Male": 1, "Non-binary": 2, "Prefer not to say": -1}
+        gender = gender_map.get(gender_raw, 1)  # default male=1 if unknown
+
+        sleep_hours_raw = data.get("q3", 8)  # q3: hours sleep each night
+        try:
+            sleep_hours = float(sleep_hours_raw)
+        except:
+            sleep_hours = 8  # default 8 hours if invalid
+
+        physical_activity_days_raw = data.get("q4", 3)  # q4: physical activity days/week
+        try:
+            physical_activity_days = float(physical_activity_days_raw)
+        except:
+            physical_activity_days = 3  # default
+
+        # --- Extract symptom answers for mental health features ---
+        # We'll use the symptom questions (q5 to q42) which are scored 0-4 from the frontend
+
+        # Extract all other q5 to q42 as floats, default 0 if missing
+        symptom_answers = []
+        for i in range(5, 43):
             key = f"q{i}"
-            if key not in data:
-                return jsonify({"error": f"Missing answer for {key}"}), 400
-            answers.append(float(data[key]))
+            val = data.get(key, 0)
+            try:
+                symptom_answers.append(float(val))
+            except:
+                symptom_answers.append(0)
 
-        # Map questionnaire answers to model features
-        # You need to adjust these mappings according to your domain knowledge
-        # For example:
-        age = data.get("age", 30)  # optionally passed from frontend or default
-        gender = data.get("gender", 1)  # 0=female, 1=male, default 1
+        # Example: you can engineer features from symptom_answers based on domain knowledge
+        # For now, let's create some aggregate scores:
+        # Depression (q5-q13), Anxiety (q14-q20), Stress (q21-q26), ADHD (q27-q28),
+        # BPD (q29-q30), Bipolar (q31-q32), PTSD (q33-q34), OCD (q35-q36),
+        # Schizophrenia (q37-q38), Eating Disorder (q39-q40), Substance Use (q41-q42)
 
-        sleep_hours = max(0, 8 - answers[2])  # q3 trouble sleeping
-        physical_activity_days = data.get("physical_activity_days", 3)  # default 3
-        stress_score = (answers[0] + answers[1]) / 2  # q1 & q2 related to stress/depression
-        anxiety_score = (answers[7] + answers[8]) / 2  # q8 & q9 anxiety related
-        depression_score = (answers[0] + answers[1]) / 2  # q1 & q2 depression related
-        impulsivity_score = answers[9]  # q10 impulsivity proxy
-        hallucinations_score = 0  # no data, assume 0
-        mood_swings_score = answers[3]  # q4 tired = mood swings proxy
-        eating_habits_score = 0  # no data
-        substance_use_score = 0  # no data
-        trauma_experience_score = 0  # no data
-        adhd_score = 0  # no data
+        def mean_score(indices):
+            vals = [symptom_answers[i - 5] for i in indices if i - 5 < len(symptom_answers)]
+            if not vals:
+                return 0
+            return sum(vals) / len(vals)
 
+        depression_score = mean_score(range(5, 14))
+        anxiety_score = mean_score(range(14, 21))
+        stress_score = mean_score(range(21, 27))
+        adhd_score = mean_score(range(27, 29))
+        bpd_score = mean_score(range(29, 31))
+        bipolar_score = mean_score(range(31, 33))
+        ptsd_score = mean_score(range(33, 35))
+        ocd_score = mean_score(range(35, 37))
+        schizophrenia_score = mean_score(range(37, 39))
+        eating_disorder_score = mean_score(range(39, 41))
+        substance_use_score = mean_score(range(41, 43))
+
+        # Impulsivity can be approximated by BPD score or specific questions:
+        impulsivity_score = bpd_score
+
+        # Mood swings proxy could be bipolar score
+        mood_swings_score = bipolar_score
+
+        # You can refine these features or add more based on model requirements
         features = [
-            age, gender, sleep_hours, physical_activity_days, stress_score,
-            anxiety_score, depression_score, impulsivity_score,
-            hallucinations_score, mood_swings_score, eating_habits_score,
-            substance_use_score, trauma_experience_score, adhd_score
+            age,
+            gender,
+            sleep_hours,
+            physical_activity_days,
+            stress_score,
+            anxiety_score,
+            depression_score,
+            impulsivity_score,
+            schizophrenia_score,  # hallucinations proxy
+            mood_swings_score,
+            eating_disorder_score,
+            substance_use_score,
+            ptsd_score,
+            adhd_score,
+            ocd_score,
+            bpd_score,
+            bipolar_score,
         ]
 
         X = np.array(features).reshape(1, -1)
@@ -73,15 +124,12 @@ def predict():
         # Scale features
         X_scaled = scaler.transform(X)
 
-        # Predict probabilities (adjust if your model uses predict or predict_proba)
-        # If using sklearn classifiers: model.predict_proba
-        # If using keras/tf: model.predict returns probabilities directly
+        # Predict probabilities
         if hasattr(model, "predict_proba"):
             prediction_probs = model.predict_proba(X_scaled)
         else:
             prediction_probs = model.predict(X_scaled)
 
-        # Ensure output shape matches (1, number_of_disorders)
         if prediction_probs.shape[0] != 1 or prediction_probs.shape[1] != len(disorders):
             return jsonify({"error": "Prediction output shape mismatch"}), 500
 

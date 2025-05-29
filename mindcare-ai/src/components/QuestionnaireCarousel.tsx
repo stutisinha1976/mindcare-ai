@@ -141,17 +141,38 @@ export default function QuestionnaireCarousel({ setProbabilities }: Props) {
         </p>
         <p className="mb-4">{questions[index].label}</p>
 
-        <select
-          value={answers[questions[index].id]}
-          onChange={(e) => handleChange(Number(e.target.value))}
-          className="border rounded px-3 py-2 w-full"
-        >
-          <option value={0}>Never / Not at all</option>
-          <option value={1}>Rarely / A little</option>
-          <option value={2}>Sometimes / Moderately</option>
-          <option value={3}>Often / Severely</option>
-          <option value={4}>Always / Extremely</option>
-        </select>
+        {questions[index].type === "number" ? (
+  <input
+    type="number"
+    value={answers[questions[index].id]}
+    onChange={(e) => handleChange(Number(e.target.value))}
+    className="border rounded px-3 py-2 w-full"
+  />
+) : questions[index].type === "select" ? (
+  <select
+    value={answers[questions[index].id]}
+    onChange={(e) => handleChange(Number(e.target.value))}
+    className="border rounded px-3 py-2 w-full"
+  >
+    <option value={0}>-- Select --</option>
+    {questions[index].options?.map((option, i) => (
+      <option key={i} value={i + 1}>{option}</option>
+    ))}
+  </select>
+) : (
+  <select
+    value={answers[questions[index].id]}
+    onChange={(e) => handleChange(Number(e.target.value))}
+    className="border rounded px-3 py-2 w-full"
+  >
+    <option value={0}>Never / Not at all</option>
+    <option value={1}>Rarely / A little</option>
+    <option value={2}>Sometimes / Moderately</option>
+    <option value={3}>Often / Severely</option>
+    <option value={4}>Always / Extremely</option>
+  </select>
+)}
+
       </div>
 
       {/* Navigation Buttons */}
