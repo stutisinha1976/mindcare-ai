@@ -98,19 +98,11 @@ const EmotionDetector: React.FC = () => {
   };
 
   return (
-    <main
-      className="relative min-h-screen flex items-center justify-center text-green-900 overflow-hidden"
-      style={{
-        backgroundImage: `url('/bg_emotion.gif')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
-    >
-      {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black/50 z-0" />
+    <main className="relative min-h-screen flex items-center justify-center text-green-900 overflow-hidden">
+      {/* Moving diagonal gradient background */}
+      <div className="absolute inset-0 z-0 animate-diagonalGradient" />
 
-      {/* Glassmorphic Chatbot */}
+      {/* Chatbot container */}
       <div className="w-full max-w-screen-sm mx-auto flex flex-col h-[90vh] border border-white/20 rounded-2xl shadow-2xl backdrop-blur-lg bg-white/10 relative z-10 overflow-hidden">
         <header className="px-6 py-4 border-b border-white/20 font-bold text-xl text-white bg-white/10 backdrop-blur-sm rounded-t-2xl select-none">
           Emotion Detector Chatbot
@@ -125,7 +117,6 @@ const EmotionDetector: React.FC = () => {
           {emotionToEmoji[currentEmotion] || '❓'}
         </div>
 
-        {/* Chat messages scrollable area */}
         <div className="flex-1 px-6 py-4 overflow-y-auto space-y-4" aria-live="polite">
           {messages.map((msg, idx) => (
             <div
@@ -150,7 +141,7 @@ const EmotionDetector: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input area */}
+        {/* Input Area */}
         <div className="flex border-t border-white/20 bg-white/10 backdrop-blur-md p-4 rounded-b-2xl">
           <input
             ref={inputRef}
@@ -181,31 +172,47 @@ const EmotionDetector: React.FC = () => {
         </div>
       </div>
 
-      {/* Animations */}
+      {/* CSS Styles */}
       <style jsx>{`
         @keyframes shake {
-          0%, 100% {
-            transform: translateX(0);
-          }
-          20%, 60% {
-            transform: translateX(-8px);
-          }
-          40%, 80% {
-            transform: translateX(8px);
-          }
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-8px); }
+          40%, 80% { transform: translateX(8px); }
         }
         .animate-shake {
           animation: shake 0.5s;
         }
+
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(5px);
+          from { opacity: 0; transform: translateY(5px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes diagonalGradient {
+          0% {
+            background-position: 0% 50%;
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
+          50% {
+            background-position: 100% 50%;
           }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+
+        .animate-diagonalGradient {
+          background: linear-gradient(
+            135deg,
+            #a8e6cf,
+            #dcedc1,
+            #aed581,
+            #81c784,
+            #66bb6a,
+            #a5d6a7
+          );
+          background-size: 400% 400%;
+          animation: diagonalGradient 20s ease infinite;
+          filter: blur(30px);
         }
       `}</style>
     </main>
