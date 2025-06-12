@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - journal
+      - risk
+      - emotion
+    environment:
+      - NEXT_PUBLIC_API_BASE=http://localhost
+
+  journal:
+    build:
+      context: ./backend/journal
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/journal:/app
+    environment:
+      - TZ=Asia/Kolkata
+
+  risk:
+    build:
+      context: ./backend/risk-prediction
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./backend/risk_prediction:/app
+    environment:
+      - TZ=Asia/Kolkata
+
+  emotion:
+    build:
+      context: ./backend/emotion_detector
+    ports:
+      - "5002:5000"
+    volumes:
+      - ./backend/emotion:/app
+    environment:
+      - TZ=Asia/Kolkata
